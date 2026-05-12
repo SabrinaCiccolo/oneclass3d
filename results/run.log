@@ -1,0 +1,103 @@
+### RUN (geometry, features: abs, full bank) ###
+[bagel] ...
+[cable_gland] ...
+[carrot] ...
+[cookie] ...
+[dowel] ...
+[foam] ...
+[peach] ...
+[potato] ...
+[rope] ...
+[tire] ...
+
+repro OK (full bank): raw kNN(k=1) 10-class mean = 0.7563 (anchor 0.7563, |Δ| < 0.002)
+
+scorer              rep         mean AUROC     ±sd    geom
+----------------------------------------------------------
+knn                 raw              0.756   0.140   0.744
+knn                 whitened         0.803   0.138   0.797
+modern_hopfield     raw              0.673   0.102   0.658
+modern_hopfield     whitened         0.807   0.136   0.801
+kde                 raw              0.581   0.081   0.577
+kde                 whitened         0.536   0.068   0.529
+ocsvm               raw              0.608   0.079   0.604
+ocsvm               whitened         0.737   0.160   0.731
+centroid            raw              0.582   0.081   0.577
+centroid            whitened         0.527   0.068   0.526
+classical_hopfield  raw              0.581   0.081   0.577
+classical_hopfield  whitened         0.657   0.173   0.645
+
+wrote results/tables/auroc.csv
+      results/tables/auroc.md
+
+### RUN (multimodal, features: mm, full bank) ###
+[bagel] ...
+[cable_gland] ...
+[carrot] ...
+[cookie] ...
+[dowel] ...
+[foam] ...
+[peach] ...
+[potato] ...
+[rope] ...
+[tire] ...
+
+sanity (mm, topk_frac=None, bank_cap=None): raw kNN(k=1) 10-class mean = 0.9337  [multimodal: should land ~0.92-0.94 at full data, clearly above the ~0.80 geometry-only numbers]
+
+scorer              rep         mean AUROC     ±sd    geom
+----------------------------------------------------------
+knn                 raw              0.934   0.055   0.913
+knn                 whitened         0.815   0.125   0.786
+knn                 blockwise        0.948   0.048   0.938
+modern_hopfield     raw              0.925   0.059   0.904
+modern_hopfield     whitened         0.821   0.121   0.790
+modern_hopfield     blockwise        0.947   0.048   0.936
+kde                 raw              0.638   0.103   0.630
+kde                 whitened         0.596   0.149   0.592
+kde                 blockwise        0.656   0.090   0.638
+ocsvm               raw              0.751   0.097   0.731
+ocsvm               whitened         0.703   0.097   0.689
+ocsvm               blockwise        0.810   0.075   0.792
+centroid            raw              0.634   0.101   0.627
+centroid            whitened         0.528   0.151   0.521
+centroid            blockwise        0.642   0.093   0.624
+classical_hopfield  raw              0.640   0.104   0.632
+classical_hopfield  whitened         0.681   0.106   0.673
+classical_hopfield  blockwise        0.716   0.116   0.701
+
+wrote results/tables/auroc_mm.csv
+      results/tables/auroc_mm.md
+
+### LOCALIZE (geometry, knn / whitened) ###
+pixel-AUROC localization - scorer=knn, rep=whitened
+
+class           pixel-AUROC   n_anom
+bagel                0.9776       88
+cable_gland          0.9209       87
+carrot               0.9905      132
+cookie               0.9017      103
+dowel                0.9549      104
+foam                 0.8926       80
+peach                0.9914      106
+potato               0.9958       92
+rope                 0.9518       69
+tire                 0.9283       87
+------------------------------------
+MEAN                 0.9505
+
+wrote results/tables/localization.csv
+
+### PLOT ###
+wrote results/figures/auroc_bar.png
+wrote results/figures/mm_vs_geom.png
+  beta-sweep [bagel] done
+  beta-sweep [cable_gland] done
+  beta-sweep [carrot] done
+  beta-sweep [cookie] done
+  beta-sweep [dowel] done
+  beta-sweep [foam] done
+  beta-sweep [peach] done
+  beta-sweep [potato] done
+  beta-sweep [rope] done
+  beta-sweep [tire] done
+wrote results/figures/mh_beta_sweep.png
