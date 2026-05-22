@@ -56,3 +56,28 @@ linear one-class SGD model. Compared with an exact-kernel fit on a 2000-patch su
 the two are tied: mean AUROC 0.607 vs 0.608 raw and 0.731 vs 0.737 whitened, with
 Nyström ahead on 4 and 5 of 10 classes. The Nyström fit takes 0.3–3.9 s per class, the
 exact subsample fit under 0.15 s.
+
+## Preprocessing checks
+
+**Background-plane removal** (`plane_ablation.py` → `results/tables/plane_ablation.csv`).
+On four classes (carrot, cookie, cable_gland, tire) the fitted plane covers 61–94% of a
+scan's resampled valid points. Geometry was re-extracted without plane removal
+(`ransac.enabled: false`) and scored with k-NN, full bank:
+
+| k-NN | plane removed (default) | plane kept |
+|---|---|---|
+| whitened | **0.721** | 0.685 |
+| raw | 0.682 | **0.736** |
+
+- **Whitened: removing the plane helps** (+0.036, 3 of 4 classes). Otherwise the flat
+  plane dominates the covariance the whitener is fit on.
+- **Raw: keeping the plane helps.** This is a bank-size effect: the bank grows 2.5–14×
+  (carrot 15.8k → 224k patches) and raw k-NN benefits from the extra coverage.
+- **The clear gain is efficiency**: a several-fold smaller bank.
+
+**Border-strip assumption** (`border_check.py` → `results/tables/border_check.csv`). The
+RANSAC plane is fit to the image-border strip, assuming the object never reaches it. The
+fitted plane removes on average ≥ 92.5% of the border-strip pixels in every class. The
+lowest is rope, whose elongated shape sometimes reaches the border. Only 9 of 3853 train
+and test scans fall below 90%. Rope is still among the best-detected classes (k-NN 0.981
+raw), so the assumption holds well enough.

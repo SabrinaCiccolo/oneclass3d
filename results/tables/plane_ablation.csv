@@ -1,0 +1,17 @@
+class,pipeline,rep,scorer,auroc,n_bank,n_test_scans,plane_frac
+carrot,default,raw,knn,0.8608,15821,159,0.9398
+carrot,default,whitened,knn,0.9602,15821,159,0.9398
+carrot,nr,raw,knn,0.8721,224224,159,0.9398
+carrot,nr,whitened,knn,0.9035,224224,159,0.9398
+cookie,default,raw,knn,0.777,63098,131,0.6092
+cookie,default,whitened,knn,0.7555,63098,131,0.6092
+cookie,nr,raw,knn,0.8228,158089,131,0.6092
+cookie,nr,whitened,knn,0.785,158089,131,0.6092
+cable_gland,default,raw,knn,0.5337,33168,108,0.8124
+cable_gland,default,whitened,knn,0.5359,33168,108,0.8124
+cable_gland,nr,raw,knn,0.6907,169621,108,0.8124
+cable_gland,nr,whitened,knn,0.4926,169621,108,0.8124
+tire,default,raw,knn,0.5549,38614,112,0.753
+tire,default,whitened,knn,0.6336,38614,112,0.753
+tire,nr,raw,knn,0.5595,112478,112,0.753
+tire,nr,whitened,knn,0.5609,112478,112,0.753
