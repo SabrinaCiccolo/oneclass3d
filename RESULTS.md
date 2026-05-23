@@ -57,6 +57,64 @@ the two are tied: mean AUROC 0.607 vs 0.608 raw and 0.731 vs 0.737 whitened, wit
 Nyström ahead on 4 and 5 of 10 classes. The Nyström fit takes 0.3–3.9 s per class, the
 exact subsample fit under 0.15 s.
 
+## Choosing β from normal scans only (`beta: auto`)
+
+`src/scorers.py:select_beta` picks Modern Hopfield's β per class without test labels:
+1. hold out a slice of the normal bank;
+2. build near-manifold pseudo-anomalies from it (mixup and bin-swap of real
+   descriptors);
+3. take the smallest β whose held-normal vs pseudo-anomaly AUROC is within one standard
+   error of the best.
+
+On the multimodal descriptor the pseudo-anomalies are built separately for the FPFH and
+the DINOv2 block (`geom_dim`), because the two blocks are concentrated very differently
+on the sphere.
+
+The selected values (`beta_selected` in `results/tables/contamination.csv`, clean rows):
+- whitened geometry: 50–500, 100 most often;
+- raw geometry: always 1000, the hard 1-NN end of the grid;
+- whitened multimodal: 10–20.
+
+On the contamination study's evaluation split with the full bank (clean, whitened
+geometry), β-auto scores 0.810, β = 100 scores 0.812 and k-NN 0.807. Automatic
+selection therefore matches the hand-set value with no test-set tuning.
+
+## Robustness: defective patches in the bank
+
+`contamination.py` → `results/tables/contamination.csv`,
+`results/figures/contamination.png`.
+
+**Setup.**
+- 0, 5 or 10% of the bank is replaced by patches from defective test scans.
+- The defective scans are split by scan into an injection pool and an evaluation pool.
+- 3 seeds, `bank_cap: 12000`.
+- Whitening and `beta: auto` are fit on the contaminated bank.
+
+Change in mean AUROC at 5% / 10% contamination:
+
+| features, rep | knn | MH (β = 100) | MH (auto) | mahalanobis | kde |
+|---|---|---|---|---|---|
+| geometry raw | −.026 / −.033 | −.010 / −.013 | −.025 / −.033 | **−.036 / −.057** | .000 / .000 |
+| geometry whitened | −.034 / −.053 | −.033 / −.050 | −.034 / −.051 | −.018 / −.042 | +.005 / +.010 |
+| multimodal raw | −.028 / −.052 | −.024 / −.044 | −.028 / −.052 | **−.075 / −.130** | – |
+| multimodal whitened | −.074 / −.097 | −.071 / −.093 | −.053 / −.062 | −.075 / −.084 | – |
+
+Seed band (max − min of the class mean over the 3 seeds): 0.002–0.024 on geometry,
+0.005–0.044 on multimodal features.
+
+- **Soft and hard retrieval degrade the same way.** Modern Hopfield degrades like 1-NN
+  within the seed band. The full-bank check gives the same result (whitened geometry,
+  5%): k-NN −0.048, Modern Hopfield −0.047, β-auto −0.047. Raw Modern Hopfield at β = 100
+  degrades less only because it starts 0.07 lower.
+- **Retrieval and parametric scoring do separate.** Mahalanobis (50 k-means clusters,
+  Ledoit-Wolf covariances) is the best clean scorer on raw geometry (0.785 vs 0.736 for
+  k-NN), but on raw banks it degrades 1.4–2.7× faster than k-NN.
+  Contaminated clusters absorb the defect patches, while retrieval only fails when a
+  query's nearest stored patch is itself a contaminant.
+- **Whitening is estimated on the contaminated bank**, so it carries part of the
+  contamination into the representation.
+- **KDE at Scott's bandwidth is too smooth** to notice contamination, or defects.
+
 ## Preprocessing checks
 
 **Background-plane removal** (`plane_ablation.py` → `results/tables/plane_ablation.csv`).
