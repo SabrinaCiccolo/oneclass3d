@@ -115,6 +115,61 @@ Seed band (max − min of the class mean over the 3 seeds): 0.002–0.024 on geo
   contamination into the representation.
 - **KDE at Scott's bandwidth is too smooth** to notice contamination, or defects.
 
+## Robustness: corrupted geometry
+
+`extract.py corrupt` + `corruption.py` → `results/tables/corruption_grid.csv`,
+`results/figures/corruption_{gauss,occlusion,density,quantize}.png`,
+`results/mitigation.md`, `results/seed_probe.md`.
+
+**Setup.**
+- Classes: bagel and cable_gland, geometry features, full banks.
+- Four corruption families at three severities hit the organized scan before any
+  preprocessing. Lengths are relative to the bounding-box diagonal *d*.
+- Regimes: clean bank with corrupted test scans, or both corrupted.
+- Detectors: raw k-NN and whitened Modern Hopfield with `beta: auto`.
+
+Clean bagel AUROC: 0.843 (raw k-NN), 0.871 (whitened Modern Hopfield). cable_gland is
+near chance throughout and only adds noise, so the bagel results are the informative
+ones:
+- **Gaussian noise is catastrophic.** At σ = 0.01 *d* both detectors fall to 0.41–0.48
+  (Δ −0.36 to −0.43). At 0.005 *d* the whitened detector already collapses (0.52) while
+  raw k-NN survives (0.91): whitening amplifies the noise-shifted directions.
+- **Occlusion is mild.** A 40% half-plane cut costs 0.04–0.15.
+- **Density dropout is mostly absorbed** by the nearest-valid resampling. Raw k-NN moves
+  by −0.06 to +0.03; the whitened detector even gains +0.04 to +0.09.
+- **Depth quantization costs at most 0.06.**
+- **The regime matters for noise**, in opposite directions for the two detectors. At
+  σ = 0.005 *d*, corrupting the bank too costs raw k-NN 0.14 but helps the whitened
+  detector by 0.12.
+
+**Mitigation** (`results/mitigation.md`). The three worst cells, all bagel with Gaussian
+noise, were re-extracted with RANSAC and/or DBSCAN cleanup switched off. Switching off
+the DBSCAN cleanup lifts the whitened detector from 0.484 to 0.794 at σ = 0.01 *d* with a
+clean bank. Under noise, DBSCAN's fixed eps (0.006) fragments the cloud, and keeping the
+largest component discards most of the object. Raw k-NN recovers less (+0.10 to +0.12,
+best with RANSAC off). No variant returns to the clean baseline.
+
+**DBSCAN eps modes** (`corruption.py eps` → `results/eps_modes.md`).
+`cleanup.dbscan_eps_mode` offers a scale-relative eps (`rel`) and a per-scan k-distance
+eps (`adaptive`) besides the fixed one. Results on the same cells:
+
+| cell | detector | fixed eps | cleanup off | rel | adaptive |
+|---|---|---|---|---|---|
+| σ = 0.01 *d*, clean bank | MH-auto whitened | 0.484 | 0.794 | **0.819** | 0.741 |
+| σ = 0.01 *d*, clean bank | k-NN raw | 0.481 | 0.496 | 0.465 | **0.554** |
+| σ = 0.01 *d*, corrupted bank | MH-auto whitened | 0.483 | 0.575 | 0.580 | **0.613** |
+| σ = 0.01 *d*, corrupted bank | k-NN raw | 0.415 | 0.457 | **0.458** | 0.425 |
+| σ = 0.005 *d*, clean bank | k-NN raw | 0.906 | 0.890 | **0.940** | 0.893 |
+| σ = 0.005 *d*, clean bank | MH-auto whitened | 0.519 | **0.612** | 0.469 | 0.419 |
+
+Neither mode wins consistently, so the fixed eps stays the default.
+
+**Seed variance** (`results/seed_probe.md`). Each grid cell is a single corruption draw.
+Re-scoring the mitigation cells at 3 draws gives bands of 0.069–0.141 AUROC. A single
+draw can sit at the edge of its band: for MH-auto with a corrupted bank at σ = 0.01 *d*,
+the grid value is 0.483 while the 3-seed mean is 0.421. Read the grid's absolute numbers
+as indicative.
+
 ## Preprocessing checks
 
 **Background-plane removal** (`plane_ablation.py` → `results/tables/plane_ablation.csv`).
