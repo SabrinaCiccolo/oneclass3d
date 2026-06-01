@@ -194,3 +194,15 @@ fitted plane removes on average ≥ 92.5% of the border-strip pixels in every cl
 lowest is rope, whose elongated shape sometimes reaches the border. Only 9 of 3853 train
 and test scans fall below 90%. Rope is still among the best-detected classes (k-NN 0.981
 raw), so the assumption holds well enough.
+
+## KDE and Modern Hopfield are the same scorer
+
+On the unit sphere, KDE with bandwidth h = 1/√β ranks patches exactly like Modern
+Hopfield at β (`tests/test_scorers.py` checks the identity). The β sweep is therefore
+also a KDE bandwidth sweep (`results/tables/kde_bandwidth_sweep.csv`,
+`results/figures/kde_bandwidth_view.png`).
+
+Scott's rule gives h = 0.74–0.77, at the over-smoothed end of the tested range
+(h = 0.03–1.0). The whitened sweep at those bandwidths interpolates to about 0.55–0.60,
+consistent with the measured 0.536. KDE's low score is a bandwidth choice, not a limit
+of the representation.
