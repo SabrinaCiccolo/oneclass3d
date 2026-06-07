@@ -79,6 +79,31 @@ On the contamination study's evaluation split with the full bank (clean, whitene
 geometry), β-auto scores 0.810, β = 100 scores 0.812 and k-NN 0.807. Automatic
 selection therefore matches the hand-set value with no test-set tuning.
 
+## Multimodal features (FPFH + DINOv2)
+
+`extract.py rgb`, `features: mm` → `results/tables/auroc_mm.{csv,md}`,
+`results/tables/auroc_ci_mm.csv`, `results/figures/mm_vs_geom.png`.
+
+| scorer | raw | whitened (joint) | **block-wise** | CCA |
+|---|---|---|---|---|
+| knn | 0.934 | 0.815 | **0.948** | 0.889 |
+| modern_hopfield | 0.925 | 0.821 | **0.947** | 0.891 |
+
+- **The RGB token rescues the near-chance classes** (raw k-NN, geometry → multimodal):
+  cable_gland 0.53 → 0.97, foam 0.59 → 0.85, tire 0.55 → 0.92.
+- **Joint whitening hurts.** The DINOv2 tokens are already well spread, and whitening
+  the whole vector rescales away the appearance structure.
+- **Block-wise whitening works best.** Whitening only the geometry block and leaving
+  DINOv2 raw beats both alternatives for both scorers.
+- **CCA fusion is worse than block-wise whitening.** CCA (`condition(rep="cca")`) means
+  per-block shrunk whitening followed by the SVD of the cross-covariance. Its rows are
+  numerically fragile: on potato the k-NN AUROC moves between 0.69 and 0.75 with the
+  BLAS thread count (10-class mean 0.889–0.895), always below block-wise whitening.
+
+A `bank_cap` subsample is always drawn from the cache being scored. For `features: mm`
+that is the full 417-dim descriptor, so coreset selection never works on a
+geometry-only proxy.
+
 ## Robustness: defective patches in the bank
 
 `contamination.py` → `results/tables/contamination.csv`,
