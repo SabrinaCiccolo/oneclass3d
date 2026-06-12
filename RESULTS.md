@@ -231,3 +231,11 @@ Scott's rule gives h = 0.74–0.77, at the over-smoothed end of the tested range
 (h = 0.03–1.0). The whitened sweep at those bandwidths interpolates to about 0.55–0.60,
 consistent with the measured 0.536. KDE's low score is a bandwidth choice, not a limit
 of the representation.
+
+## Cross-class transfer
+
+`cross_class.py` → `results/tables/cross_class.csv` and heatmap. Whitened k-NN on
+geometry, full bank, every (bank class, test class) pair:
+- **Diagonal:** mean 0.803, equal to `auroc.csv`.
+- **Off-diagonal:** mean 0.635, so a shape prior partly transfers between objects.
+- **Spread:** from 0.906 down to 0.382, below chance for some pairs.
