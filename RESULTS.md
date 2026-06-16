@@ -104,6 +104,19 @@ A `bank_cap` subsample is always drawn from the cache being scored. For `feature
 that is the full 417-dim descriptor, so coreset selection never works on a
 geometry-only proxy.
 
+## Patch-to-image aggregation
+
+`topk_sweep.py` → `results/tables/topk_sweep.csv`. Setup: block-wise whitened
+multimodal k-NN, `bank_cap: 12000`. The image score is the mean of the worst
+`topk_frac` of a scan's patches; the default is min-pool.
+
+| topk_frac | min-pool | 0.01 | 0.05 | 0.1 | 0.25 | 0.5 | 1.0 |
+|---|---|---|---|---|---|---|---|
+| image AUROC | 0.948 | **0.957** | 0.956 | 0.941 | 0.900 | 0.862 | 0.824 |
+
+Averaging the worst 1–5% of patches is slightly better than min-pool (+0.009). Larger
+fractions dilute the defect. All other numbers use the min-pool default.
+
 ## Robustness: defective patches in the bank
 
 `contamination.py` → `results/tables/contamination.csv`,
