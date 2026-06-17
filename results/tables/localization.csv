@@ -1,0 +1,12 @@
+scorer,rep,class,pixel_auroc,aupro,n_anom
+knn,whitened,bagel,0.9776,0.9479,88
+knn,whitened,cable_gland,0.9209,0.7422,87
+knn,whitened,carrot,0.9905,0.9696,132
+knn,whitened,cookie,0.9017,0.8477,103
+knn,whitened,dowel,0.9549,0.8523,104
+knn,whitened,foam,0.8926,0.6535,80
+knn,whitened,peach,0.9914,0.9546,106
+knn,whitened,potato,0.9958,0.9692,92
+knn,whitened,rope,0.9518,0.82,69
+knn,whitened,tire,0.9283,0.7275,87
+knn,whitened,mean,0.9505,0.8485,
