@@ -104,6 +104,40 @@ A `bank_cap` subsample is always drawn from the cache being scored. For `feature
 that is the full 417-dim descriptor, so coreset selection never works on a
 geometry-only proxy.
 
+## Localization
+
+`localize.py` → `results/tables/localization.csv`, `results/figures/localization/`
+(RGB | anomaly overlay | ground truth).
+
+The per-patch anomaly of whitened k-NN on geometry forms a 28×28 map. It is projected
+onto the ground-truth masks through the feature pipeline's own resample index.
+
+| metric | mean | range over classes |
+|---|---|---|
+| pixel-AUROC | 0.951 | 0.893 (foam) – 0.996 (potato) |
+| AUPRO (FPR ≤ 0.3) | 0.849 | 0.654 (foam) – 0.970 (carrot) |
+
+AUPRO penalizes partial coverage of a defect region, so it is lower than pixel-AUROC.
+The classes that are near chance at image level still localize well. Pixel-AUROC is
+0.92 for cable_gland, 0.89 for foam and 0.93 for tire: geometry sees *where* the defect
+is even when it cannot reliably flag the scan.
+
+## RGB encoder: DINOv2 vs DINOv3
+
+`extract.py rgb_v3` + `encoders.py` → `results/tables/encoders.csv`. `features: mm_v3`
+uses `vit_small_patch16_dinov3.lvd1689m`, which also gives 384-dim tokens on the same
+28×28 grid. Both encoders are scored with block-wise whitened k-NN at `bank_cap: 12000`
+(pixel metrics as in `localize.py`):
+
+| encoder | image AUROC | pixel-AUROC | AUPRO |
+|---|---|---|---|
+| DINOv2 (`mm`) | **0.928** | **0.976** | **0.931** |
+| DINOv3 (`mm_v3`) | 0.871 | 0.971 | 0.907 |
+
+DINOv2 is better on every metric: on image and pixel AUROC in 8 of 10 classes and on
+AUPRO in all 10. The largest gaps are cable_gland (0.889 vs 0.652) and foam (0.780 vs
+0.634). DINOv2 stays the default.
+
 ## Patch-to-image aggregation
 
 `topk_sweep.py` → `results/tables/topk_sweep.csv`. Setup: block-wise whitened
