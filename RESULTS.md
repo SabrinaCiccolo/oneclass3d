@@ -286,3 +286,36 @@ geometry, full bank, every (bank class, test class) pair:
 - **Diagonal:** mean 0.803, equal to `auroc.csv`.
 - **Off-diagonal:** mean 0.635, so a shape prior partly transfers between objects.
 - **Spread:** from 0.906 down to 0.382, below chance for some pairs.
+
+## Deployment metrics
+
+**Fixed operating point.** `extract.py validation` + `operating_point.py` →
+`results/tables/operating_point.csv`, `results/operating_point.md`,
+`results/figures/operating_point.png`.
+
+The bank is fit on `train`. The threshold is read off the scores of the normal-only
+`validation` split, which neither the bank nor the test set contains. It is then applied
+unchanged to `test`.
+
+At a 5% target false-positive rate (whitened, mean over classes):
+
+| scorer | precision | recall | F1 | realized FPR on test |
+|---|---|---|---|---|
+| knn | 0.957 | 0.435 | 0.532 | 0.064 |
+| modern_hopfield | 0.961 | 0.435 | 0.529 | 0.059 |
+| ocsvm | 0.923 | 0.307 | 0.415 | 0.054 |
+
+- **The realized false-positive rate tracks the target**: 0.0–0.16 per class, on small
+  numbers of good test scans.
+- **Recall is very uneven**: from 6% on tire to 87% on carrot, following the
+  geometry-blind vs geometric classes above.
+- **Illustrative cost weights** (a miss costs 5× or 20× a false alarm) keep the same
+  ranking.
+
+**Timing.** `timing.py` → `results/tables/timing_{extraction,scoring,whitening}.csv`,
+`results/figures/timing.png`, `results/timing_summary.md`. Measured on one machine
+(8 logical CPUs, WSL2):
+- **Feature extraction:** 938 ms per scan, single-threaded, 30 real scans.
+- **Scoring:** raw k-NN with the full bank takes 20 ms per scan on average, from 2.6 ms
+  (carrot, 15.8k patches) to 46 ms (cookie, 63k patches).
+- **End to end:** about 1 scan per second on one CPU process, without batching.
