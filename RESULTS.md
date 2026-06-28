@@ -6,6 +6,28 @@ section says otherwise. Hyperparameters are fixed defaults or are picked from no
 scans only; nothing is selected against test labels. Each table cites the file in
 `results/` it comes from.
 
+## Summary
+
+| features | best scorer | image AUROC |
+|---|---|---|
+| geometry (FPFH, 33-d), whitened | Modern Hopfield / k-NN | 0.807 / 0.803 |
+| geometry + RGB (FPFH + DINOv2, 417-d), block-wise whitened | k-NN / Modern Hopfield | 0.948 / 0.947 |
+
+- **Whitening is the main lever on geometry.** Raw FPFH patches are tightly concentrated
+  on the unit sphere. Whitening spreads them out and lifts every retrieval scorer.
+- **Modern Hopfield ties k-NN and does not beat it.** It generalizes k-NN with a
+  temperature, so its best case is k-NN.
+- **RGB removes the geometry blind spot.** Three classes that are near chance on
+  geometry (cable_gland, foam, tire) gain the most. Whitening only the geometry block
+  is the best multimodal recipe.
+- **Localization is strong even where detection is weak.** Geometry-only pixel-AUROC is
+  0.951 and AUPRO 0.849.
+- **Retrieval is more robust than parametric scoring.** Bank contamination separates
+  k-NN / Modern Hopfield from Mahalanobis, not soft from hard retrieval.
+- **A good ranking does not mean a good detector at a fixed threshold.** At a 5%
+  false-positive rate calibrated on normal validation scans, whitened k-NN finds 44% of
+  the defects.
+
 ## Six scorers on geometry
 
 `run.py` → `results/tables/auroc.{csv,md}` (per class), `results/tables/auroc_ci.csv`,
@@ -362,3 +384,24 @@ At a 5% target false-positive rate (whitened, mean over classes):
 - **Scoring:** raw k-NN with the full bank takes 20 ms per scan on average, from 2.6 ms
   (carrot, 15.8k patches) to 46 ms (cookie, 63k patches).
 - **End to end:** about 1 scan per second on one CPU process, without batching.
+
+## Limitations
+
+- **One dataset, 10 classes.** Per-class tables, across-class SDs, bootstrap CIs and a
+  paired test are reported to make the small sample visible.
+- **The headline is image-level.** Localization is reported separately, over anomalous
+  scans only.
+- **Scores are not calibrated.** The scorers output different native quantities
+  (distance, log-sum-exp energy, log-density, SVM margin). Calibrating them would need
+  labelled anomalies. The fixed operating point answers the practical question
+  instead, using normal scans only.
+- **Multimodal robustness is out of scope.** The corruption grid covers geometry only:
+  a multimodal version would need paired RGB corruptions.
+
+## Reproducibility
+
+Extraction is single-threaded and bit-deterministic (`OMP_NUM_THREADS=1`,
+`open3d==0.19.0`). With the full geometry bank, `run.py` asserts that raw k-NN
+reproduces the 10-class mean of 0.7563. Every random choice in the studies is seeded
+from its content through `src/repro.stable_rng`. The commands for every table and figure
+are listed in the [README](README.md#usage).
