@@ -187,6 +187,49 @@ Seed band (max − min of the class mean over the 3 seeds): 0.002–0.024 on geo
   contamination into the representation.
 - **KDE at Scott's bandwidth is too smooth** to notice contamination, or defects.
 
+## Robustness: bank size and coresets
+
+`bank_size.py` → `results/tables/bank_size.csv`, `results/figures/bank_size.png`.
+Caps of 12000, 4000 and 1000 patches; uniform vs greedy k-center selection; 3 seeds;
+geometry features.
+
+| mean AUROC | cap 12000 | 4000 | 1000 |
+|---|---|---|---|
+| k-NN raw, uniform | 0.732 | 0.709 | 0.674 |
+| k-NN raw, k-center | 0.757 | 0.759 | 0.760 |
+| k-NN whitened, uniform | 0.801 | 0.783 | 0.752 |
+| k-NN whitened, k-center | 0.786 | 0.776 | 0.746 |
+
+- **Raw features: k-center dominates.** A 1000-patch k-center bank matches the full bank
+  (0.760 vs 0.756), with 16–71× less memory depending on the class.
+- **Whitened features: uniform is slightly better.** The whitener is estimated on the
+  coreset, and k-center's coverage-maximizing selection distorts the covariance it
+  needs.
+- **Raw Modern Hopfield at β = 100 improves as a k-center bank shrinks**
+  (0.696 → 0.721): fewer terms in the log-sum-exp mean less bias.
+
+**Memory and latency** (`timing.py`, same caps, `results/tables/timing_scoring.csv`).
+The scorers fall into two families:
+- **True memory-bank scorers** (k-NN, Modern Hopfield, KDE) store the whole bank. Memory
+  and per-scan scoring time grow linearly with it: k-NN uses 0.13 MB at 1000 patches and
+  9.4 MB at bagel's full 71k. Fitting costs nothing.
+- **Compressed scorers** pay a fit cost that grows with the bank (Mahalanobis k-means:
+  0.12 s at 1000 patches, 2.7 s at 71k). Their footprint is then constant: classical
+  Hopfield 8.7 KB, Mahalanobis 0.22 MB, Nyström OC-SVM 2.1 MB.
+
+**Hybrid k-NN + Mahalanobis** (`hybrid.py` → `results/tables/hybrid.csv`, clean
+banks, `bank_cap: 12000`). `Hybrid` / `select_alpha` combine z-scored k-NN and
+Mahalanobis scores, with α picked from normal scans by the same pseudo-anomaly probe as
+`select_beta`.
+
+| geometry | k-NN | Mahalanobis | hybrid | α = 0 selected |
+|---|---|---|---|---|
+| raw | 0.737 | 0.789 | **0.793** | 5 of 10 classes |
+| whitened | **0.801** | 0.796 | 0.795 | 7 of 10 classes |
+
+On clean banks the probe mostly picks pure Mahalanobis, so the hybrid tracks it and adds
+little. It remains available as a scorer option.
+
 ## Robustness: corrupted geometry
 
 `extract.py corrupt` + `corruption.py` → `results/tables/corruption_grid.csv`,
